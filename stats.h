@@ -6,4 +6,5 @@ typedef struct {
   double cpu_secs; // Do not remove or change
   // You may add any new fields that you believe are necessary
   char *name;
+  int valid;
 } stats_t;

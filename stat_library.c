@@ -2,7 +2,11 @@
 #include "stat.h"
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/types.h>
+#include "stat_server.h"
+
 #define ERROR_SHMGET "shmget failed"
+#define MAX_CLIENTS 16
 
 /*
  * Attempts to attach to an existing shared memory segment with the specified
@@ -14,17 +18,48 @@
  * must call stat_init().
  */
 stat_t* stat_init(key_t key) {
-  long pagesize = getpagesize();
-  int seg_id = shmget(key, pagesize, IPC_CREAT | IPC_EXCL)
+  int seg_id = shmget(key, sizeof(stat_t), IPC_CREAT|IPC_EXCL)
   if (seg_id != EEXIST) {
       write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
       return NULL;
-  }
-  else {
-    char *ptr = shmat(seg_id, NULL, 0);
+  } else {
+    stat_t *ptr = (stat_t*) shmat(seg_id, NULL, 0);
+    int i = 0;
+    // Search through the struct array to find an empty spot for client
+    while (ptr->valid != 0 && i < MAX_CLIENTS) {
+      ptr++;
+      i++;
+    }
+    // Check if all slots were full
+    if (ptr->valid != 0) {
+      return NULL;
+    } else {
+      return ptr;
+    }
   }
 }
 
+/*
+ * Removes the calling process from using the shared memory segment. If
+ * successful, it returns 0; if not successful (e.g., this process, or the
+ * process with this pid, did not call stat_init), it should return -1
+ */
 int stat_unlink(key_t key) {
-
+  pid_t pid = getpid();
+  int seg_id = shmget(key, sizeof(stat_t), IPC_CREAT|IPC_EXCL)
+  if (seg_id != EEXIST) {
+      write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
+      return NULL;
+  } else {
+    stat_t *ptr = (stat_t*) shmat(seg_id, NULL, 0);
+    int i = 0;
+    while ((!ptr->valid || ptr->pid != pid) && i < MAX_CLIENTS) {
+      ptr++;
+      i++;
+    }
+    if (!ptr->valid || ptr->pid != pid) {
+      return -1;
+    } else {
+      ptr->valid = 0;
+    }
 }
