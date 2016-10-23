@@ -2,23 +2,36 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#define ERROR_USAGE "Usage: stats_client -k key -p priority -s sleeptime_ns -c \
+cputime_ns"
 
-/*
- * Attempts to attach to an existing shared memory segment with the specified
- * key. If this is successful, it should return a pointer to the portion of the
- * shared memory segment that this client should write to for its statistics; if
- * it is not successful (e.g., the shared segment with the desired key does not
- * exist or too many clients are already using the segment for statistics), it
- * should return NULL. Each client that wishes to use the statistics monitor
- * must call stat_init().
- */
-stat_t* stat_init(key_t key) {
-  if ((seg_id = shmget(key, size, IPC_CREAT)) < 0) {
-    write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
-  }
-  char *ptr = shmat(seg_id, NULL, 0);
+void usage(char *) {
+  write(STDERR, ERROR_USAGE, strlen(ERROR_USAGE));
+  exit(1);
 }
 
-int stat_unlink(key_t key) {
-
+int main(int argc, char *argv[]) {
+  key_t key = 1;
+  int priority = 1, sleeptime_ns = 1000, cputime_ns = 1000;
+  int c;
+  opterr = 0;
+  while ((c = getopt(argc, argv, "k:p:s:c")) != -1) {
+    switch (c) {
+    case 'k':
+      key = atoi(optarg);
+      break;
+    case 'p':
+      priority = atoi(optarg);
+      break;
+    case 's':
+      sleeptime_ns = atoi(optarg);
+      break;
+    case 'c':
+      cputime_ns = strdup(optarg);
+      break;
+    default:
+      usage(argv[0]);
+    }
+  }
+  return 0;
 }

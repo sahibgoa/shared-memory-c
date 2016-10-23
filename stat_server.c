@@ -1,6 +1,6 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <sys/sem.h>
+#include <semaphore.h>
 #include <ctype.h>
 #include "stat_server.h"
 #include "stat.h"
@@ -63,13 +63,18 @@ int main(int argc, char *argv[]) {
   stat_t *ptr, *rd_ptr;
   // Get pointer to shared memory
   ptr = (stat_t*) shmat(seg_id, NULL, 0);
+  sem_t mutex;
+  if ((mutex = sem_open("mysemaphore -- key?", O_CREAT, 0644, 1)) == SEM_FAILED) {
+    perror("sem_open");
+    exit(1);
+  }
 
-  sem_t sem;
-  sem_init(&sem, 0, 1);
   // Infinite loop to read data
   while (1) {
-    sem_wait(&sem);
     // Print all the client statistics
+    if (sem_wait(&mutex) < 0) {
+        perror("sem_wait");
+    }
     for (j = 0, rd_ptr = ptr; j < num_clients; j++, rd_ptr++) {
       char *line = (char*) malloc(sizeof(stats_t) - sizeof(int) + 6 +
                                   strlen(rd_ptr->name) + num_chars_in_int(i));
@@ -78,8 +83,11 @@ int main(int argc, char *argv[]) {
       write(STDOUT, line, strlen(line));
       free(line);
     }
-    sem_post(&sem);
+    if (sem_post(&mutex) < 0) {
+        perror("sem_post");
+    }
     i++;
     sleep(1);
   }
+
 }

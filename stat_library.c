@@ -18,7 +18,7 @@
  * must call stat_init().
  */
 stat_t* stat_init(key_t key) {
-  int seg_id = shmget(key, sizeof(stat_t), IPC_CREAT|IPC_EXCL)
+  int seg_id = shmget(key, sizeof(stat_t), IPC_CREAT|IPC_EXCL|SHM_W)
   if (seg_id != EEXIST) {
       write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
       return NULL;
