@@ -25,6 +25,9 @@ stat_t* stat_init(key_t key) {
   } else {
     stat_t *ptr = (stat_t*) shmat(seg_id, NULL, 0);
     int i = 0;
+    sem_t sem;
+    sem_init(&sem, 0, 1);
+    sem_wait(&sem);
     // Search through the struct array to find an empty spot for client
     while (ptr->valid != 0 && i < MAX_CLIENTS) {
       ptr++;
@@ -32,8 +35,10 @@ stat_t* stat_init(key_t key) {
     }
     // Check if all slots were full
     if (ptr->valid != 0) {
+      sem_post(&sem);
       return NULL;
     } else {
+      sem_post(&sem);
       return ptr;
     }
   }
@@ -53,13 +58,19 @@ int stat_unlink(key_t key) {
   } else {
     stat_t *ptr = (stat_t*) shmat(seg_id, NULL, 0);
     int i = 0;
+    sem_t sem;
+    sem_init(&sem, 0, 1);
+    sem_wait(&sem);
     while ((!ptr->valid || ptr->pid != pid) && i < MAX_CLIENTS) {
       ptr++;
       i++;
     }
     if (!ptr->valid || ptr->pid != pid) {
+      sem_post(&sem);
       return -1;
     } else {
+      sem_post(&sem);
       ptr->valid = 0;
+      return 0;
     }
 }
