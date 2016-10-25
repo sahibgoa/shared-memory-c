@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   int c, priority = 1;
   long sleeptime_ns = 1000, cputime_ns = 1000;
   opterr = 0;
-  while ((c = getopt(argc, argv, "k:p:s:c")) != -1) {
+  while ((c = getopt(argc, argv, "k:p:s:c:")) != -1) {
     switch (c) {
     case 'k':
       key = atoi(optarg);

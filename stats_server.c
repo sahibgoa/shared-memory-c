@@ -16,7 +16,6 @@
 #define STDERR 2
 #define ERROR_USAGE "Usage: stat_server -k [key]\n"
 #define ERROR_SIGINT "Error when setting up sigaction for SIGINT\n"
-#define ERROR_SHMGET "shmget failed"
 #define MAX_CLIENTS 16
 
 int seg_id, num_clients = 0;
@@ -90,7 +89,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  // Declaring all variables required
   key_t key = atoi(argv[2]);
   int j, i = 1;
   long pagesize = getpagesize();
