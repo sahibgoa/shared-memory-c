@@ -14,7 +14,7 @@
 
 #define STDOUT 1
 #define STDERR 2
-#define ERROR_USAGE "Usage: stat_server -k [key]"
+#define ERROR_USAGE "Usage: stat_server -k [key]\n"
 #define ERROR_SIGINT "Error when setting up sigaction for SIGINT\n"
 #define ERROR_SHMGET "shmget failed"
 #define MAX_CLIENTS 16

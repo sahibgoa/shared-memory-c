@@ -14,7 +14,7 @@
 #include "stats_library.h"
 
 #define ERROR_USAGE "Usage: stats_client -k key -p priority -s sleeptime_ns -c \
-cputime_ns"
+cputime_ns\n"
 #define ERROR_SIGINT "Error when setting up sigaction for SIGINT\n"
 #define BILLION  1000000000L;
 #define STDOUT 1
