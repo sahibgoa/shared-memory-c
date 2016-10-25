@@ -5,6 +5,6 @@ typedef struct {
   int priority;   // Do not remove or change
   double cpu_secs; // Do not remove or change
   // You may add any new fields that you believe are necessary
-  char *name;
+  char name[16];
   int valid;
 } stats_t;
