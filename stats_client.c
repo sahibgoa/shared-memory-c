@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
   }
   sem_wait(mutex);
 
+  // if(ptr != NULL) {}
   ptr->pid = getpid();
   ptr->counter = 0;
   ptr->priority = priority;
