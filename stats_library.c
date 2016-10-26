@@ -22,6 +22,7 @@ stats_t* stats_init(key_t key) {
       return NULL;
   } else {
     seg_id = shmget(key, sizeof(stats_t), SHM_W);
+    printf("seg_id = %d\n", seg_id);
     stats_t *ptr = (stats_t*) shmat(seg_id, (void*) 0, 0);
     int i = 0;
     if ((mutex = sem_open("mysemaphore", 0, 0644, 1)) == SEM_FAILED) {

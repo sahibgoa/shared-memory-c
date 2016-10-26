@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     perror("shmget");
     exit(1);
   }
-
+  printf("seg_id = %d\n", seg_id);
   // Attach to the shared memory segment
   ptr = (stats_t*) shmat(seg_id, NULL, 0);
   if (ptr == NULL) {
