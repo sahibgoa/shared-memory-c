@@ -17,11 +17,12 @@
 stats_t* stats_init(key_t key) {
   sem_t *mutex;
   int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
-  if (seg_id != -1) { // call fails when it workds.
+  printf("seg_id = %d\n", seg_id);
+  if (seg_id != -1) { // call fails when segment exists
       write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
       return NULL;
   } else {
-    seg_id = shmget(key, sizeof(stats_t), SHM_W);
+    seg_id = shmget(key, sizeof(stats_t), 0);
     printf("seg_id = %d\n", seg_id);
     stats_t *ptr = (stats_t*) shmat(seg_id, (void*) 0, 0);
     int i = 0;
