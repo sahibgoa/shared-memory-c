@@ -24,6 +24,8 @@ sem_t *mutex;
 // Handler for SIGINT
 void sigint_handler(int signal)
 {
+  write(STDOUT, "\n", 1);
+  
   // Remove shared memory segment
   if (shmctl(seg_id, IPC_RMID, NULL) == -1) {
     perror("shmctl");
@@ -31,7 +33,7 @@ void sigint_handler(int signal)
   }
 
   // Unlink semaphore
-  if (sem_unlink("mysemaphore") == -1) {
+  if (sem_unlink("sahib-se") == -1) {
     perror("sem_unlink");
     exit(1);
   }
@@ -96,7 +98,7 @@ int main(int argc, char *argv[]) {
   char *line;
 
   // Create and initialize memory segment
-  seg_id = shmget(key, pagesize, IPC_CREAT);
+  seg_id = shmget(key, pagesize, IPC_CREAT|0666);
   if (seg_id < 0) {
     perror("shmget");
     exit(1);
@@ -108,13 +110,14 @@ int main(int argc, char *argv[]) {
     perror("shmat");
     exit(1);
   }
+  printf("shmat return: %p\n", ptr);
 
   //
-  if ((mutex = sem_open("mysemaphore", O_CREAT, 0644, 1)) == SEM_FAILED) {
+  if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
     perror("sem_open");
     exit(1);
   }
-  sem_init(mutex, 0, 1);
+  //sem_init(mutex, 0, 1);
 
   // Infinite loop to read data
   while (1) {
@@ -125,12 +128,12 @@ int main(int argc, char *argv[]) {
         perror("sem_wait");
     }
     j = 0;
-    for (rd_ptr = ptr; j < num_clients; j++, rd_ptr++) {
+    for (rd_ptr = ptr; j < MAX_CLIENTS; j++, rd_ptr++) {
       if(rd_ptr->valid == 1) {
         line = (char*) malloc(sizeof(stats_t) - sizeof(int) + 6 +
                                     strlen(rd_ptr->name) + num_chars_in_int(i));
         sprintf(line, "%d %d %s %d %.2f %d\n", i, rd_ptr->pid, rd_ptr->name,
-              rd_ptr->counter, rd_ptr->cpu_secs, rd_ptr->priority);
+                rd_ptr->counter, rd_ptr->cpu_secs, rd_ptr->priority);
         write(STDOUT, line, strlen(line));
         free(line);
       }

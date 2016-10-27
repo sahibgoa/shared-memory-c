@@ -25,6 +25,8 @@ key_t key;
 // handler for SIGINT
 void sigint_handler(int signal)
 {
+  write(STDOUT, "\n", 1);
+  
   stats_unlink(key);
   exit(0);
 }
@@ -70,13 +72,6 @@ int main(int argc, char *argv[]) {
   }
 
   stats_t *ptr = stats_init(key);
-  sem_t *mutex;
-
-  if ((mutex = sem_open("mysemaphore", O_CREAT, 0644, 1)) == SEM_FAILED) {
-    perror("sem_open");
-    exit(1);
-  }
-  sem_wait(mutex);
 
   // if(ptr != NULL) {}
   ptr->pid = getpid();
@@ -90,7 +85,6 @@ int main(int argc, char *argv[]) {
     argv[0][15] = '\0';
   }
   strcpy(ptr->name, argv[0]);
-  sem_post(mutex);
 
   struct timespec tim_begin, tim_init, tim_final, tim_nsleep;
   double diff;
@@ -105,18 +99,12 @@ int main(int argc, char *argv[]) {
     clock_gettime(CLOCK_REALTIME, &tim_init);
     do {
       clock_gettime(CLOCK_REALTIME, &tim_final);
-      diff = (tim_final.tv_sec - tim_init.tv_sec) + (tim_final.tv_nsec - tim_init.tv_nsec) / BILLION;
+      diff = (tim_final.tv_nsec - tim_init.tv_nsec) + (tim_final.tv_sec - tim_init.tv_sec) * BILLION;
     } while (diff < cputime_ns);
 
-    if ((mutex = sem_open("mysemaphore", O_CREAT, 0644, 1)) == SEM_FAILED) {
-      perror("sem_open");
-      exit(1);
-    }
-    sem_wait(mutex);
     ptr->cpu_secs = tim_final.tv_sec - tim_begin.tv_sec;
     ptr->priority = getpriority(PRIO_PROCESS, 0);
     ptr->counter++;
-    sem_post(mutex);
   }
 
   return 0;

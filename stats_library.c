@@ -14,8 +14,13 @@
 #define STDOUT 1
 #define STDERR 2
 
+sem_t *mutex;
+
 stats_t* stats_init(key_t key) {
-  sem_t *mutex;
+  if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
+    perror("sem_open");
+    exit(1);
+  }
   int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
   printf("seg_id = %d\n", seg_id);
   if (seg_id != -1) { // call fails when segment exists
@@ -24,15 +29,15 @@ stats_t* stats_init(key_t key) {
   } else {
     seg_id = shmget(key, sizeof(stats_t), 0);
     printf("seg_id = %d\n", seg_id);
-    stats_t *ptr = (stats_t*) shmat(seg_id, (void*) 0, 0);
+    stats_t *ptr = (stats_t*) shmat(seg_id, NULL, 0);
     int i = 0;
-    if ((mutex = sem_open("mysemaphore", 0, 0644, 1)) == SEM_FAILED) {
+    if (mutex == SEM_FAILED) {
       perror("sem_open");
-      exit(1);
+      return NULL;
     }
 
     sem_wait(mutex);
-write(STDOUT, "returned\n", strlen("returned\n"));
+    write(STDOUT, "returned\n", strlen("returned\n"));
     // Search through the struct array to find an empty spot for client
     while (ptr->valid != 0 && i < MAX_CLIENTS) {
       ptr++;
@@ -52,7 +57,6 @@ write(STDOUT, "returned\n", strlen("returned\n"));
 }
 
 int stats_unlink(key_t key) {
-  sem_t *mutex;
   pid_t pid = getpid();
   int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
   if (seg_id != -1) {
@@ -62,11 +66,6 @@ int stats_unlink(key_t key) {
     seg_id = shmget(key, sizeof(stats_t), 0);
     stats_t *ptr = (stats_t*) shmat(seg_id, NULL, 0);
     int i = 0;
-
-    if ((mutex = sem_open("mysemaphore", 0, 0644, 1)) == SEM_FAILED) {
-      perror("sem_open");
-      exit(1);
-    }
     sem_wait(mutex);
 
     while ((!ptr->valid || ptr->pid != pid) && i < MAX_CLIENTS) {
