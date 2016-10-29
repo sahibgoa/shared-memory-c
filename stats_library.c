@@ -19,7 +19,7 @@ sem_t *mutex;
 stats_t* stats_init(key_t key) {
   if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
     perror("sem_open");
-    exit(1);
+    return NULL;
   }
   int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
   printf("seg_id = %d\n", seg_id);
