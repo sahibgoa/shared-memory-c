@@ -13,8 +13,8 @@
 #include "stats.h"
 #include "stats_library.h"
 
-#define ERROR_USAGE "Usage: stats_client -k key -p priority -s sleeptime_ns -c \
-cputime_ns\n"
+#define ERROR_USAGE "Usage: stats_client -k key -p priority -s sleeptime_n "\
+                    "-c cputime_ns\n"
 #define ERROR_SIGINT "Error when setting up sigaction for SIGINT\n"
 #define BILLION  1000000000L;
 #define STDOUT 1
@@ -23,10 +23,9 @@ cputime_ns\n"
 key_t key;
 
 // handler for SIGINT
-void sigint_handler(int signal)
-{
+void sigint_handler(int signal) {
   write(STDOUT, "\n", 1);
-  
+
   stats_unlink(key);
   exit(0);
 }
@@ -40,13 +39,12 @@ void usage(char *name) {
 int main(int argc, char *argv[]) {
   // Set up the SIGINT handler
   struct sigaction sigint;
-	memset(&sigint,0,sizeof(sigint));
-	sigint.sa_handler = sigint_handler;
-	if(sigaction(SIGINT, &sigint, NULL) !=0 )
-	{
-		write(STDOUT, ERROR_SIGINT, strlen(ERROR_SIGINT));
-		exit(0);
-	}
+  memset(&sigint, 0, sizeof(sigint));
+  sigint.sa_handler = sigint_handler;
+  if (sigaction(SIGINT, &sigint, NULL) != 0) {
+    write(STDOUT, ERROR_SIGINT, strlen(ERROR_SIGINT));
+    exit(0);
+  }
 
   key = 1;
   int c, priority = 1;
@@ -73,7 +71,9 @@ int main(int argc, char *argv[]) {
 
   stats_t *ptr = stats_init(key);
 
-  // if(ptr != NULL) {}
+  if (ptr == NULL) {  // server is not running?
+    exit(1);
+  }
   ptr->pid = getpid();
   ptr->counter = 0;
   ptr->priority = priority;
@@ -93,13 +93,14 @@ int main(int argc, char *argv[]) {
   tim_nsleep.tv_sec = sleeptime_ns / BILLION;
   tim_nsleep.tv_nsec = sleeptime_ns % BILLION;
 
-  while(1) {
+  while (1) {
     nanosleep(&tim_nsleep, NULL);
 
     clock_gettime(CLOCK_REALTIME, &tim_init);
     do {
       clock_gettime(CLOCK_REALTIME, &tim_final);
-      diff = (tim_final.tv_nsec - tim_init.tv_nsec) + (tim_final.tv_sec - tim_init.tv_sec) * BILLION;
+      diff = (tim_final.tv_nsec - tim_init.tv_nsec) +
+        (tim_final.tv_sec - tim_init.tv_sec) * BILLION;
     } while (diff < cputime_ns);
 
     ptr->cpu_secs = tim_final.tv_sec - tim_begin.tv_sec;

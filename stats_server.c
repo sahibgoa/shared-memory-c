@@ -18,23 +18,22 @@
 #define ERROR_SIGINT "Error when setting up sigaction for SIGINT\n"
 #define MAX_CLIENTS 16
 
-int seg_id, num_clients = 0;
+int seg_id;
 sem_t *mutex;
 
 // Handler for SIGINT
-void sigint_handler(int signal)
-{
+void sigint_handler(int signal) {
   write(STDOUT, "\n", 1);
-  
+
   // Remove shared memory segment
   if (shmctl(seg_id, IPC_RMID, NULL) == -1) {
-    perror("shmctl");
+    perror("shmctl failed\n");
     exit(1);
   }
 
   // Unlink semaphore
   if (sem_unlink("sahib-se") == -1) {
-    perror("sem_unlink");
+    perror("sem_unlink failed\n");
     exit(1);
   }
 
@@ -77,10 +76,9 @@ int num_chars_in_int(int integer) {
 int main(int argc, char *argv[]) {
   // Set up the SIGINT handler
   struct sigaction sigint;
-  memset(&sigint,0,sizeof(sigint));
+  memset(&sigint, 0, sizeof(sigint));
   sigint.sa_handler = sigint_handler;
-  if(sigaction(SIGINT, &sigint, NULL) !=0 )
-  {
+  if (sigaction(SIGINT, &sigint, NULL) != 0) {
     write(STDOUT, ERROR_SIGINT, strlen(ERROR_SIGINT));
     exit(0);
   }
@@ -100,24 +98,24 @@ int main(int argc, char *argv[]) {
   // Create and initialize memory segment
   seg_id = shmget(key, pagesize, IPC_CREAT|0666);
   if (seg_id < 0) {
-    perror("shmget");
+    perror("shmget failed\n");
     exit(1);
   }
   printf("seg_id = %d\n", seg_id);
   // Attach to the shared memory segment
   ptr = (stats_t*) shmat(seg_id, NULL, 0);
   if (ptr == NULL) {
-    perror("shmat");
+    perror("shmat failed\n");
     exit(1);
   }
   printf("shmat return: %p\n", ptr);
 
   //
   if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
-    perror("sem_open");
+    perror("sem_open failed\n");
     exit(1);
   }
-  //sem_init(mutex, 0, 1);
+  // sem_init(mutex, 0, 1);
 
   // Infinite loop to read data
   while (1) {
@@ -125,11 +123,11 @@ int main(int argc, char *argv[]) {
 
     // Print all the client statistics
     if (sem_wait(mutex) < 0) {
-        perror("sem_wait");
+        perror("sem_wait failed\n");
     }
     j = 0;
     for (rd_ptr = ptr; j < MAX_CLIENTS; j++, rd_ptr++) {
-      if(rd_ptr->valid == 1) {
+      if (rd_ptr->valid == 1) {
         line = (char*) malloc(sizeof(stats_t) - sizeof(int) + 6 +
                                     strlen(rd_ptr->name) + num_chars_in_int(i));
         sprintf(line, "%d %d %s %d %.2f %d\n", i, rd_ptr->pid, rd_ptr->name,
@@ -139,7 +137,7 @@ int main(int argc, char *argv[]) {
       }
     }
     if (sem_post(mutex) < 0) {
-        perror("sem_post");
+        perror("sem_post failed\n");
     }
     write(STDOUT, "\n", 1);
     i++;

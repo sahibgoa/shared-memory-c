@@ -1,7 +1,4 @@
 
-// Number of clients (MAX 16)
-extern int num_clients;
-
 /* Checks whether the given string is a number or not */
 int is_number(char *num);
 

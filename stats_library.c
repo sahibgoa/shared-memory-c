@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include "stats.h"
 
-#define ERROR_SHMGET "shmget failed"
+#define ERROR_SHMGET "shmget failed\n"
 #define MAX_CLIENTS 16
 #define STDOUT 1
 #define STDERR 2
@@ -18,26 +18,26 @@ sem_t *mutex;
 
 stats_t* stats_init(key_t key) {
   if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
-    perror("sem_open");
+    perror("sem_open failed\n");
     return NULL;
   }
   int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
-  printf("seg_id = %d\n", seg_id);
-  if (seg_id != -1) { // call fails when segment exists
+  if (seg_id != -1) {  // call fails when segment exists
       write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
       return NULL;
   } else {
     seg_id = shmget(key, sizeof(stats_t), 0);
-    printf("seg_id = %d\n", seg_id);
     stats_t *ptr = (stats_t*) shmat(seg_id, NULL, 0);
+    if (ptr == (stats_t*) -1) {
+      return NULL;
+    }
     int i = 0;
     if (mutex == SEM_FAILED) {
-      perror("sem_open");
+      perror("sem_open failed\n");
       return NULL;
     }
 
     sem_wait(mutex);
-    write(STDOUT, "returned\n", strlen("returned\n"));
     // Search through the struct array to find an empty spot for client
     while (ptr->valid != 0 && i < MAX_CLIENTS) {
       ptr++;
@@ -45,7 +45,7 @@ stats_t* stats_init(key_t key) {
     }
 
     // Check if all slots were full
-    if (ptr->valid != 0) {
+    if (i == MAX_CLIENTS) {
       sem_post(mutex);
       return NULL;
     } else {
