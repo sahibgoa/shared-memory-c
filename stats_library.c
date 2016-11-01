@@ -18,10 +18,6 @@
 sem_t *mutex;
 
 stats_t* stats_init(key_t key) {
-  if ((mutex = sem_open("sahib-se", 0)) == SEM_FAILED) {
-    perror("sem_open failed in stats_init\n");
-    return NULL;
-  }
   int seg_id = shmget(key, sizeof(stats_t), 0666);
   if (seg_id == -1) {  // call fails when segment exists
       write(STDERR, ERROR_SHMGET_INIT, strlen(ERROR_SHMGET_INIT));

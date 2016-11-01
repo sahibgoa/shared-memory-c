@@ -21,12 +21,17 @@
 #define STDERR 2
 
 key_t key;
+sem_t *mutex;
 
 // handler for SIGINT
 void sigint_handler(int signal) {
   write(STDOUT, "\n", 1);
 
   stats_unlink(key);
+  if (sem_close(mutex) == -1) {
+    perror("sem_close failed in client\n");
+    exit(1);
+  }
   exit(0);
 }
 
@@ -68,6 +73,10 @@ int main(int argc, char *argv[]) {
       usage(argv[0]);
     }
   }
+  if ((mutex = sem_open("sahib-se", 0)) == SEM_FAILED) {
+    perror("sem_open failed in stats_init\n");
+    exit(1);
+  }
 
   stats_t *ptr = stats_init(key);
 
@@ -78,7 +87,8 @@ int main(int argc, char *argv[]) {
   ptr->counter = 0;
   ptr->priority = priority;
   if (setpriority(PRIO_PROCESS, 0, ptr->priority) == -1) {
-    perror("-1 retu in setpriority");
+    perror("setpriority failed in client\n");
+    // exit(1);
   }
   ptr->cpu_secs = 0.0;
 
