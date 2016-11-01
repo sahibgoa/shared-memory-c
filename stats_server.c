@@ -9,7 +9,6 @@
 #include <sys/shm.h>
 #include <unistd.h>
 
-#include "stats_server.h"
 #include "stats.h"
 
 #define STDOUT 1

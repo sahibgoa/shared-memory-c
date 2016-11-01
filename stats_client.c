@@ -11,7 +11,6 @@
 #include <time.h>
 #include <unistd.h>
 #include "stats.h"
-#include "stats_library.h"
 
 #define ERROR_USAGE "Usage: stats_client -k key -p priority -s sleeptime_n "\
                     "-c cputime_ns\n"
@@ -19,6 +18,9 @@
 #define BILLION  1000000000L
 #define STDOUT 1
 #define STDERR 2
+
+stats_t* stats_init(key_t key);
+int stats_unlink(key_t key);
 
 key_t key;
 sem_t *mutex;
