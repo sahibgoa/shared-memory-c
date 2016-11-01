@@ -27,19 +27,19 @@ void sigint_handler(int signal) {
 
   // Remove shared memory segment
   if (shmctl(seg_id, IPC_RMID, NULL) == -1) {
-    perror("shmctl failed\n");
+    perror("shmctl failed in server\n");
     exit(1);
   }
 
   // Unlink semaphore
   if (sem_unlink("sahib-se") == -1) {
-    perror("sem_unlink failed\n");
+    perror("sem_unlink failed in server\n");
     exit(1);
   }
 
   // Close semaphore
   if (sem_close(mutex) == -1) {
-    perror("sem_close failed\n");
+    perror("sem_close failed in server\n");
     exit(1);
   }
   exit(0);
@@ -103,21 +103,20 @@ int main(int argc, char *argv[]) {
   // Create and initialize memory segment
   seg_id = shmget(key, pagesize, IPC_CREAT|IPC_EXCL|0666);
   if (seg_id < 0) {  // Segment already exists
-    perror("shmget failed\n");
+    perror("shmget failed in server\n");
     exit(1);
   }
-  printf("seg_id = %d\n", seg_id);
+
   // Attach to the shared memory segment
   ptr = (stats_t*) shmat(seg_id, NULL, 0);
   if (ptr == NULL) {
-    perror("shmat failed\n");
+    perror("shmat failed in server\n");
     exit(1);
   }
-  printf("shmat return: %p\n", ptr);
 
   //
   if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
-    perror("sem_open failed\n");
+    perror("sem_open failed in server\n");
     exit(1);
   }
   // sem_init(mutex, 0, 1);
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]) {
 
     // Print all the client statistics
     if (sem_wait(mutex) < 0) {
-        perror("sem_wait failed\n");
+        perror("sem_wait failed in server\n");
     }
     j = 0;
     for (rd_ptr = ptr; j < MAX_CLIENTS; j++, rd_ptr++) {
@@ -142,7 +141,7 @@ int main(int argc, char *argv[]) {
       }
     }
     if (sem_post(mutex) < 0) {
-        perror("sem_post failed\n");
+        perror("sem_post failed in server\n");
     }
     write(STDOUT, "\n", 1);
     i++;

@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include "stats.h"
 
-#define ERROR_SHMGET "shmget failed\n"
+#define ERROR_SHMGET_INIT "shmget failed in stats_init\n"
+#define ERROR_SHMGET_UNLILNK "shmget failed in stats_unlink\n"
 #define MAX_CLIENTS 16
 #define STDOUT 1
 #define STDERR 2
@@ -17,13 +18,13 @@
 sem_t *mutex;
 
 stats_t* stats_init(key_t key) {
-  if ((mutex = sem_open("sahib-se", O_CREAT, 0644, 1)) == SEM_FAILED) {
-    perror("sem_open failed\n");
+  if ((mutex = sem_open("sahib-se", 0)) == SEM_FAILED) {
+    perror("sem_open failed in stats_init\n");
     return NULL;
   }
   int seg_id = shmget(key, sizeof(stats_t), 0666);
   if (seg_id == -1) {  // call fails when segment exists
-      write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
+      write(STDERR, ERROR_SHMGET_INIT, strlen(ERROR_SHMGET_INIT));
       return NULL;
   } else {
     seg_id = shmget(key, sizeof(stats_t), 0);
@@ -33,7 +34,7 @@ stats_t* stats_init(key_t key) {
     }
     int i = 0;
     if (mutex == SEM_FAILED) {
-      perror("sem_open failed\n");
+      perror("sem_open failed in stats_init\n");
       return NULL;
     }
 
@@ -60,7 +61,7 @@ int stats_unlink(key_t key) {
   pid_t pid = getpid();
   int seg_id = shmget(key, sizeof(stats_t), 0666);
   if (seg_id == -1) {
-      write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
+      write(STDERR, ERROR_SHMGET_UNLILNK, strlen(ERROR_SHMGET_UNLILNK));
       return -1;
   } else {
     stats_t *ptr = (stats_t*) shmat(seg_id, NULL, 0);

@@ -77,7 +77,9 @@ int main(int argc, char *argv[]) {
   ptr->pid = getpid();
   ptr->counter = 0;
   ptr->priority = priority;
-  setpriority(PRIO_PROCESS, 0, ptr->priority);
+  if (setpriority(PRIO_PROCESS, 0, ptr->priority) == -1) {
+    perror("-1 retu in setpriority");
+  }
   ptr->cpu_secs = 0.0;
 
   // Truncate name
@@ -95,7 +97,7 @@ int main(int argc, char *argv[]) {
 
   while (1) {
     if (nanosleep(&tim_nsleep, &tim) < 0) {
-      perror("nanosleep failed\n");
+      perror("nanosleep failed in client\n");
     }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tim_init);
