@@ -96,8 +96,8 @@ int main(int argc, char *argv[]) {
   char *line;
 
   // Create and initialize memory segment
-  seg_id = shmget(key, pagesize, IPC_CREAT|0666);
-  if (seg_id < 0) {
+  seg_id = shmget(key, pagesize, IPC_CREAT|IPC_EXCL|0666);
+  if (seg_id < 0) {  // Segment already exists
     perror("shmget failed\n");
     exit(1);
   }

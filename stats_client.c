@@ -16,7 +16,7 @@
 #define ERROR_USAGE "Usage: stats_client -k key -p priority -s sleeptime_n "\
                     "-c cputime_ns\n"
 #define ERROR_SIGINT "Error when setting up sigaction for SIGINT\n"
-#define BILLION  1000000000L;
+#define BILLION  1000000000L
 #define STDOUT 1
 #define STDERR 2
 
@@ -86,24 +86,29 @@ int main(int argc, char *argv[]) {
   }
   strcpy(ptr->name, argv[0]);
 
-  struct timespec tim_begin, tim_init, tim_final, tim_nsleep;
+  struct timespec tim_begin, tim_init, tim_final, tim_nsleep, tim;
   double diff;
-  clock_gettime(CLOCK_REALTIME, &tim_begin);
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tim_begin);
 
   tim_nsleep.tv_sec = sleeptime_ns / BILLION;
   tim_nsleep.tv_nsec = sleeptime_ns % BILLION;
 
   while (1) {
-    nanosleep(&tim_nsleep, NULL);
+    if (nanosleep(&tim_nsleep, &tim) < 0) {
+      perror("nanosleep failed\n");
+    }
 
-    clock_gettime(CLOCK_REALTIME, &tim_init);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tim_init);
     do {
-      clock_gettime(CLOCK_REALTIME, &tim_final);
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tim_final);
       diff = (tim_final.tv_nsec - tim_init.tv_nsec) +
         (tim_final.tv_sec - tim_init.tv_sec) * BILLION;
     } while (diff < cputime_ns);
+    
+    ptr->cpu_secs =
+      ((double)tim_final.tv_sec + (double)tim_final.tv_nsec/BILLION) -
+      ((double)tim_begin.tv_sec + (double)tim_begin.tv_nsec/BILLION);
 
-    ptr->cpu_secs = tim_final.tv_sec - tim_begin.tv_sec;
     ptr->priority = getpriority(PRIO_PROCESS, 0);
     ptr->counter++;
   }
