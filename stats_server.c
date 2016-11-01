@@ -37,6 +37,11 @@ void sigint_handler(int signal) {
     exit(1);
   }
 
+  // Close semaphore
+  if (sem_close(mutex) == -1) {
+    perror("sem_close failed\n");
+    exit(1);
+  }
   exit(0);
 }
 

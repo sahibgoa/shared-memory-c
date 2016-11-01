@@ -21,8 +21,8 @@ stats_t* stats_init(key_t key) {
     perror("sem_open failed\n");
     return NULL;
   }
-  int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
-  if (seg_id != -1) {  // call fails when segment exists
+  int seg_id = shmget(key, sizeof(stats_t), 0666);
+  if (seg_id == -1) {  // call fails when segment exists
       write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
       return NULL;
   } else {
@@ -58,12 +58,11 @@ stats_t* stats_init(key_t key) {
 
 int stats_unlink(key_t key) {
   pid_t pid = getpid();
-  int seg_id = shmget(key, sizeof(stats_t), IPC_CREAT|IPC_EXCL);
-  if (seg_id != -1) {
+  int seg_id = shmget(key, sizeof(stats_t), 0666);
+  if (seg_id == -1) {
       write(STDERR, ERROR_SHMGET, strlen(ERROR_SHMGET));
       return -1;
   } else {
-    seg_id = shmget(key, sizeof(stats_t), 0);
     stats_t *ptr = (stats_t*) shmat(seg_id, NULL, 0);
     int i = 0;
     sem_wait(mutex);
