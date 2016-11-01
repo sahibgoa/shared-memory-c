@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
       diff = (tim_final.tv_nsec - tim_init.tv_nsec) +
         (tim_final.tv_sec - tim_init.tv_sec) * BILLION;
     } while (diff < cputime_ns);
-    
+
     ptr->cpu_secs =
       ((double)tim_final.tv_sec + (double)tim_final.tv_nsec/BILLION) -
       ((double)tim_begin.tv_sec + (double)tim_begin.tv_nsec/BILLION);
